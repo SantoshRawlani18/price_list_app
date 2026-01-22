@@ -80,4 +80,21 @@
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbzyz7ZhCkoMigNwwvJ_Vk3BcJ1qnndY4PTHohcmVvI1sjF3C-TaDLCfUizcB5oxO6uTIQ/exec";
+async function loadData() {
+  try {
+    const res = await fetch(API_URL);
+    if (!res.ok) throw new Error("Network response was not ok " + res.status);
+
+    data = await res.json();
+    vendors = data.length ? Object.keys(data[0].prices) : [];
+    populateVendorSelects();
+    renderTable(data);
+  } catch (err) {
+    console.error("Failed to load data:", err);
+    document.getElementById("tableBody").innerHTML =
+      `<tr><td colspan="10" class="text-center text-danger">
+         Failed to load data. Check API URL & deployment. Error: ${err.message}
+       </td></tr>`;
+  }
+}
 
