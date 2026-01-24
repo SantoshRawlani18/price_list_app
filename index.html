@@ -1,239 +1,219 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Price List App</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body {
-      background: #f6f7fb;
-      font-family: Arial, sans-serif;
-    }
-    .container {
-      margin-top: 20px;
-    }
-    .table-responsive {
-      max-height: 60vh;
-      overflow-y: auto;
-    }
-    .table thead th {
-      position: sticky;
-      top: 0;
-      background: #fff;
-      z-index: 2;
-    }
-    .currency {
-      font-weight: bold;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Price List App</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+  body { background:#f6f7fb; }
+  .hidden { display:none; }
+</style>
 </head>
+
 <body>
 
-<div class="container">
-  <h2 class="text-center mb-4">Vendor Price List</h2>
-
-  <!-- Add Item Form -->
-  <div class="card mb-3">
-    <div class="card-body">
-      <form id="addItemForm" class="row g-3">
-        <div class="col-md-3">
-          <label class="form-label">Item Name</label>
-          <input type="text" id="itemName" class="form-control" placeholder="Item name" required>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Vendor</label>
-          <input type="text" id="vendorName" class="form-control" placeholder="Vendor name" required>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Price (₹)</label>
-          <input type="number" id="itemPrice" class="form-control" placeholder="Price in INR" required>
-        </div>
-        <div class="col-md-3 d-flex align-items-end">
-          <button type="submit" class="btn btn-primary w-100">Add / Update Price</button>
-        </div>
-      </form>
-
-      <hr>
-
-      <!-- Add / Rename Vendor -->
-      <div class="row g-3">
-        <div class="col-md-6">
-          <label class="form-label">Add Vendor</label>
-          <input type="text" id="newVendor" class="form-control" placeholder="New vendor name">
-          <button id="addVendorBtn" class="btn btn-success mt-2">Add Vendor</button>
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">Rename Vendor</label>
-          <input type="text" id="oldVendor" class="form-control" placeholder="Old vendor name">
-          <input type="text" id="renameVendor" class="form-control mt-2" placeholder="New vendor name">
-          <button id="renameVendorBtn" class="btn btn-warning mt-2">Rename Vendor</button>
-        </div>
-      </div>
-
-      <hr>
-
-      <!-- Search -->
-      <div class="row">
-        <div class="col-md-12">
-          <input type="text" id="searchBox" class="form-control" placeholder="Search by item or vendor">
+<!-- 🔐 PIN SCREEN -->
+<div class="container mt-5" id="pinScreen">
+  <div class="row justify-content-center">
+    <div class="col-md-4">
+      <div class="card shadow">
+        <div class="card-body">
+          <h4 class="text-center mb-3">Enter PIN</h4>
+          <input type="password" id="pinInput" class="form-control mb-2" placeholder="Enter PIN">
+          <button class="btn btn-primary w-100" onclick="checkPin()">Unlock</button>
+          <div id="pinError" class="text-danger text-center mt-2"></div>
         </div>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- Table -->
-  <div class="table-responsive">
-    <table class="table table-bordered table-hover">
+<!-- 🔓 MAIN APP -->
+<div class="container hidden" id="appContent">
+
+  <h3 class="text-center mt-3 mb-3">MAP Price List</h3>
+
+  <!-- ITEM FORM (FIRST SCREEN CONTENT) -->
+  <form id="addItemForm" class="row g-2">
+    <div class="col-md-4">
+      <input type="text" id="itemName" class="form-control" placeholder="Item Name" required>
+    </div>
+    <div class="col-md-3">
+      <input type="text" id="vendorName" class="form-control" placeholder="Vendor Name" required>
+    </div>
+    <div class="col-md-3">
+      <input type="number" id="itemPrice" class="form-control" placeholder="Price ₹" required>
+    </div>
+    <div class="col-md-2">
+      <button class="btn btn-success w-100">Add / Update</button>
+    </div>
+  </form>
+
+  <!-- SEARCH -->
+  <input type="text" id="searchBox" class="form-control mt-3" placeholder="Search item or vendor">
+
+  <!-- TABLE -->
+  <div class="table-responsive mt-3">
+    <table class="table table-bordered table-striped">
       <thead>
         <tr>
-          <th>Item Name</th>
+          <th>Item</th>
           <th>Vendor</th>
           <th>Price (₹)</th>
           <th>Last Updated</th>
         </tr>
       </thead>
       <tbody id="tableBody">
-        <tr>
-          <td colspan="4" class="text-center">Loading...</td>
-        </tr>
+        <tr><td colspan="4" class="text-center">Loading...</td></tr>
       </tbody>
     </table>
   </div>
+
+  <!-- MANAGE VENDORS BUTTON -->
+  <button class="btn btn-outline-secondary w-100 my-3" onclick="toggleVendors()">
+    Manage Vendors
+  </button>
+
+  <!-- VENDOR MANAGEMENT (HIDDEN) -->
+  <div id="vendorSection" class="card p-3 mb-4 d-none">
+    <h5>Vendor Management</h5>
+
+    <div class="row g-2 mt-2">
+      <div class="col-md-6">
+        <input type="text" id="newVendor" class="form-control" placeholder="New Vendor">
+        <button class="btn btn-primary w-100 mt-1" id="addVendorBtn">Add Vendor</button>
+      </div>
+
+      <div class="col-md-6">
+        <input type="text" id="oldVendor" class="form-control" placeholder="Old Vendor">
+        <input type="text" id="renameVendor" class="form-control mt-1" placeholder="New Vendor Name">
+        <button class="btn btn-warning w-100 mt-1" id="renameVendorBtn">Rename Vendor</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
-  const API_URL = "https://script.google.com/macros/s/AKfycbzyz7ZhCkoMigNwwvJ_Vk3BcJ1qnndY4PTHohcmVvI1sjF3C-TaDLCfUizcB5oxO6uTIQ/exec";  // <--- REPLACE THIS
+/* 🔐 CONFIG */
+const APP_PIN = "1711"; // CHANGE PIN
+const API_URL = "https://script.google.com/macros/s/AKfycbytrvtOXfZOMUxzRLNuWv-hllF4pTo7jolWd0rEtV-UMO_UY6jaGJMR2YR5i8eI6L8XLg/exec"; // CHANGE API URL
 
-  let data = [];
+let data = [];
 
-  async function loadData() {
-    try {
-      const res = await fetch(API_URL);
-      if (!res.ok) throw new Error("HTTP " + res.status);
-
-      data = await res.json();
-      renderTable(data);
-    } catch (err) {
-      console.error("Failed to load data:", err);
-      document.getElementById("tableBody").innerHTML = `
-        <tr>
-          <td colspan="4" class="text-center text-danger">
-            Failed to load data. Error: ${err.message}
-          </td>
-        </tr>`;
-    }
+/* PIN CHECK */
+function checkPin() {
+  if (pinInput.value === APP_PIN) {
+    sessionStorage.setItem("auth","yes");
+    pinScreen.classList.add("hidden");
+    appContent.classList.remove("hidden");
+    loadData();
+  } else {
+    pinError.innerText = "Wrong PIN";
   }
+}
 
-  function renderTable(dataArray) {
-    const tbody = document.getElementById("tableBody");
-    tbody.innerHTML = "";
-
-    if (!dataArray.length) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="4" class="text-center">No data available</td>
-        </tr>`;
-      return;
-    }
-
-    // Render each item for each vendor
-    dataArray.forEach(itemObj => {
-      const itemName = itemObj.item;
-      const prices = itemObj.prices;
-
-      for (const vendor in prices) {
-        const price = prices[vendor];
-
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${itemName}</td>
-          <td>${vendor}</td>
-          <td class="currency">₹ ${price}</td>
-          <td>${new Date().toLocaleString()}</td>
-        `;
-        tbody.appendChild(tr);
-      }
-    });
-  }
-
-  document.getElementById("addItemForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const item = document.getElementById("itemName").value.trim();
-    const vendor = document.getElementById("vendorName").value.trim();
-    const price = document.getElementById("itemPrice").value.trim();
-
-    if (!item || !vendor || !price) return;
-
-    await fetch(API_URL, {
-      method: "POST",
-      body: JSON.stringify({
-        action: "price",
-        item,
-        vendor,
-        price
-      })
-    });
-
-    document.getElementById("itemName").value = "";
-    document.getElementById("vendorName").value = "";
-    document.getElementById("itemPrice").value = "";
-
-    loadData();
-  });
-
-  document.getElementById("addVendorBtn").addEventListener("click", async () => {
-    const vendor = document.getElementById("newVendor").value.trim();
-    if (!vendor) return;
-
-    await fetch(API_URL, {
-      method: "POST",
-      body: JSON.stringify({
-        action: "addVendor",
-        vendor
-      })
-    });
-
-    document.getElementById("newVendor").value = "";
-    loadData();
-  });
-
-  document.getElementById("renameVendorBtn").addEventListener("click", async () => {
-    const oldVendor = document.getElementById("oldVendor").value.trim();
-    const newVendor = document.getElementById("renameVendor").value.trim();
-    if (!oldVendor || !newVendor) return;
-
-    await fetch(API_URL, {
-      method: "POST",
-      body: JSON.stringify({
-        action: "renameVendor",
-        oldVendor,
-        newVendor
-      })
-    });
-
-    document.getElementById("oldVendor").value = "";
-    document.getElementById("renameVendor").value = "";
-    loadData();
-  });
-
-  document.getElementById("searchBox").addEventListener("input", () => {
-    const searchTerm = document.getElementById("searchBox").value.toLowerCase();
-
-    const filtered = data.filter(item => {
-      if (item.item.toLowerCase().includes(searchTerm)) return true;
-      for (const vendor in item.prices) {
-        if (vendor.toLowerCase().includes(searchTerm)) return true;
-      }
-      return false;
-    });
-
-    renderTable(filtered);
-  });
-
-  // Initial load
+if (sessionStorage.getItem("auth")==="yes") {
+  pinScreen.classList.add("hidden");
+  appContent.classList.remove("hidden");
   loadData();
+}
+
+/* TOGGLE VENDOR SECTION */
+function toggleVendors() {
+  vendorSection.classList.toggle("d-none");
+}
+
+/* AUTO UPPERCASE */
+["vendorName","newVendor","oldVendor","renameVendor"].forEach(id=>{
+  document.getElementById(id).addEventListener("input",e=>{
+    e.target.value=e.target.value.toUpperCase();
+  });
+});
+
+/* LOAD DATA */
+async function loadData() {
+  try {
+    const res = await fetch(API_URL);
+    data = await res.json();
+    renderTable(data);
+  } catch {
+    tableBody.innerHTML =
+      `<tr><td colspan="4" class="text-danger text-center">API Load Failed</td></tr>`;
+  }
+}
+
+/* RENDER TABLE */
+function renderTable(arr) {
+  tableBody.innerHTML="";
+  arr.forEach(r=>{
+    for (const v in r.prices) {
+      tableBody.innerHTML+=`
+      <tr>
+        <td>${r.item}</td>
+        <td>${v}</td>
+        <td>₹ ${r.prices[v]}</td>
+        <td>${new Date().toLocaleString()}</td>
+      </tr>`;
+    }
+  });
+}
+
+/* ADD / UPDATE PRICE */
+addItemForm.onsubmit=async e=>{
+  e.preventDefault();
+  await fetch(API_URL,{
+    method:"POST",
+    body:JSON.stringify({
+      action:"price",
+      item:itemName.value.trim(),
+      vendor:vendorName.value.trim().toUpperCase(),
+      price:itemPrice.value
+    })
+  });
+  addItemForm.reset();
+  loadData();
+};
+
+/* ADD VENDOR */
+addVendorBtn.onclick=async()=>{
+  await fetch(API_URL,{
+    method:"POST",
+    body:JSON.stringify({
+      action:"addVendor",
+      vendor:newVendor.value.trim().toUpperCase()
+    })
+  });
+  newVendor.value="";
+  loadData();
+};
+
+/* RENAME VENDOR */
+renameVendorBtn.onclick=async()=>{
+  await fetch(API_URL,{
+    method:"POST",
+    body:JSON.stringify({
+      action:"renameVendor",
+      oldVendor:oldVendor.value.trim().toUpperCase(),
+      newVendor:renameVendor.value.trim().toUpperCase()
+    })
+  });
+  oldVendor.value="";
+  renameVendor.value="";
+  loadData();
+};
+
+/* SEARCH */
+searchBox.oninput=()=>{
+  const q=searchBox.value.toLowerCase();
+  renderTable(data.filter(d=>
+    d.item.toLowerCase().includes(q) ||
+    Object.keys(d.prices).some(v=>v.toLowerCase().includes(q))
+  ));
+};
 </script>
 
 </body>
