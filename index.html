@@ -41,14 +41,18 @@
     <div class="col-md-4">
       <input type="text" id="itemName" class="form-control" placeholder="Item Name" required>
     </div>
+
     <div class="col-md-3">
+      <!-- ✅ VENDOR DROPDOWN -->
       <select id="vendorName" class="form-select" required>
-  <option value="">Select Vendor</option>
-</select>
+        <option value="">Select Vendor</option>
+      </select>
     </div>
+
     <div class="col-md-3">
       <input type="number" id="itemPrice" class="form-control" placeholder="Price ₹" required>
     </div>
+
     <div class="col-md-2">
       <button class="btn btn-success w-100">Add / Update</button>
     </div>
@@ -108,6 +112,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbytrvtOXfZOMUxzRLNuWv-h
 
 
 let data = [];
+let vendors = [];
 
 /* PIN */
 function checkPin() {
@@ -116,9 +121,7 @@ function checkPin() {
     pinScreen.classList.add("hidden");
     appContent.classList.remove("hidden");
     loadData();
-  } else {
-    pinError.innerText = "Wrong PIN";
-  }
+  } else pinError.innerText = "Wrong PIN";
 }
 
 if (sessionStorage.getItem("auth")==="yes") {
@@ -127,27 +130,29 @@ if (sessionStorage.getItem("auth")==="yes") {
   loadData();
 }
 
-/* TOGGLE VENDORS */
+/* TOGGLE VENDOR */
 function toggleVendors() {
   vendorSection.classList.toggle("d-none");
 }
 
-/* AUTO UPPERCASE */
-["vendorName","newVendor","oldVendor","renameVendor"].forEach(id=>{
-  document.getElementById(id).addEventListener("input",e=>{
-    e.target.value=e.target.value.toUpperCase();
-  });
-});
-
-/* LOAD DATA (NO RENDER) */
+/* LOAD DATA */
 async function loadData() {
-  try {
-    const res = await fetch(API_URL);
-    data = await res.json();
-  } catch {
-    tableBody.innerHTML =
-      `<tr><td colspan="4" class="text-danger text-center">API Load Failed</td></tr>`;
-  }
+  const res = await fetch(API_URL);
+  data = await res.json();
+  extractVendors();
+}
+
+/* EXTRACT VENDORS */
+function extractVendors() {
+  vendors = new Set();
+  data.forEach(d => {
+    Object.keys(d.prices).forEach(v => vendors.add(v));
+  });
+
+  vendorName.innerHTML = `<option value="">Select Vendor</option>`;
+  [...vendors].sort().forEach(v => {
+    vendorName.innerHTML += `<option value="${v}">${v}</option>`;
+  });
 }
 
 /* RENDER TABLE */
@@ -180,7 +185,7 @@ addItemForm.onsubmit = async e => {
     body:JSON.stringify({
       action:"price",
       item:itemName.value.trim(),
-      vendor:vendorName.value.trim().toUpperCase(),
+      vendor:vendorName.value,
       price:itemPrice.value
     })
   });
@@ -188,36 +193,9 @@ addItemForm.onsubmit = async e => {
   loadData();
 };
 
-/* ADD VENDOR */
-addVendorBtn.onclick = async () => {
-  await fetch(API_URL,{
-    method:"POST",
-    body:JSON.stringify({
-      action:"addVendor",
-      vendor:newVendor.value.trim().toUpperCase()
-    })
-  });
-  newVendor.value="";
-};
-
-/* RENAME VENDOR */
-renameVendorBtn.onclick = async () => {
-  await fetch(API_URL,{
-    method:"POST",
-    body:JSON.stringify({
-      action:"renameVendor",
-      oldVendor:oldVendor.value.trim().toUpperCase(),
-      newVendor:renameVendor.value.trim().toUpperCase()
-    })
-  });
-  oldVendor.value="";
-  renameVendor.value="";
-};
-
-/* SEARCH (ONLY TRIGGER TABLE) */
+/* SEARCH */
 searchBox.oninput = () => {
   const q = searchBox.value.trim().toLowerCase();
-
   if (!q) {
     tableBody.innerHTML =
       `<tr><td colspan="4" class="text-center text-muted">
@@ -233,7 +211,33 @@ searchBox.oninput = () => {
 
   renderTable(filtered);
 };
+
+/* ADD / RENAME VENDOR */
+addVendorBtn.onclick = async () => {
+  await fetch(API_URL,{
+    method:"POST",
+    body:JSON.stringify({ action:"addVendor", vendor:newVendor.value.toUpperCase() })
+  });
+  newVendor.value="";
+  loadData();
+};
+
+renameVendorBtn.onclick = async () => {
+  await fetch(API_URL,{
+    method:"POST",
+    body:JSON.stringify({
+      action:"renameVendor",
+      oldVendor:oldVendor.value.toUpperCase(),
+      newVendor:renameVendor.value.toUpperCase()
+    })
+  });
+  oldVendor.value="";
+  renameVendor.value="";
+  loadData();
+};
 </script>
 
 </body>
 </html>
+✅ FINAL RESULT
+✔ Vendor dropdown instead of typing
