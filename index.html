@@ -34,9 +34,9 @@
 <!-- 🔓 MAIN APP -->
 <div class="container hidden" id="appContent">
 
-  <h3 class="text-center mt-3 mb-3">MAP Price List</h3>
+  <h3 class="text-center mt-3 mb-3">Vendor Price List</h3>
 
-  <!-- ITEM FORM (FIRST SCREEN CONTENT) -->
+  <!-- ITEM FORM -->
   <form id="addItemForm" class="row g-2">
     <div class="col-md-4">
       <input type="text" id="itemName" class="form-control" placeholder="Item Name" required>
@@ -53,7 +53,8 @@
   </form>
 
   <!-- SEARCH -->
-  <input type="text" id="searchBox" class="form-control mt-3" placeholder="Search item or vendor">
+  <input type="text" id="searchBox" class="form-control mt-3"
+         placeholder="Search item or vendor to see prices">
 
   <!-- TABLE -->
   <div class="table-responsive mt-3">
@@ -67,26 +68,27 @@
         </tr>
       </thead>
       <tbody id="tableBody">
-        <tr><td colspan="4" class="text-center">Loading...</td></tr>
+        <tr>
+          <td colspan="4" class="text-center text-muted">
+            Type in search to see results
+          </td>
+        </tr>
       </tbody>
     </table>
   </div>
 
-  <!-- MANAGE VENDORS BUTTON -->
+  <!-- MANAGE VENDORS -->
   <button class="btn btn-outline-secondary w-100 my-3" onclick="toggleVendors()">
     Manage Vendors
   </button>
 
-  <!-- VENDOR MANAGEMENT (HIDDEN) -->
   <div id="vendorSection" class="card p-3 mb-4 d-none">
     <h5>Vendor Management</h5>
-
     <div class="row g-2 mt-2">
       <div class="col-md-6">
         <input type="text" id="newVendor" class="form-control" placeholder="New Vendor">
         <button class="btn btn-primary w-100 mt-1" id="addVendorBtn">Add Vendor</button>
       </div>
-
       <div class="col-md-6">
         <input type="text" id="oldVendor" class="form-control" placeholder="Old Vendor">
         <input type="text" id="renameVendor" class="form-control mt-1" placeholder="New Vendor Name">
@@ -98,13 +100,14 @@
 </div>
 
 <script>
-/* 🔐 CONFIG */
+/* CONFIG */
 const APP_PIN = "1711"; // CHANGE PIN
 const API_URL = "https://script.google.com/macros/s/AKfycbytrvtOXfZOMUxzRLNuWv-hllF4pTo7jolWd0rEtV-UMO_UY6jaGJMR2YR5i8eI6L8XLg/exec"; // CHANGE API URL
 
+
 let data = [];
 
-/* PIN CHECK */
+/* PIN */
 function checkPin() {
   if (pinInput.value === APP_PIN) {
     sessionStorage.setItem("auth","yes");
@@ -122,7 +125,7 @@ if (sessionStorage.getItem("auth")==="yes") {
   loadData();
 }
 
-/* TOGGLE VENDOR SECTION */
+/* TOGGLE VENDORS */
 function toggleVendors() {
   vendorSection.classList.toggle("d-none");
 }
@@ -134,12 +137,11 @@ function toggleVendors() {
   });
 });
 
-/* LOAD DATA */
+/* LOAD DATA (NO RENDER) */
 async function loadData() {
   try {
     const res = await fetch(API_URL);
     data = await res.json();
-    renderTable(data);
   } catch {
     tableBody.innerHTML =
       `<tr><td colspan="4" class="text-danger text-center">API Load Failed</td></tr>`;
@@ -148,22 +150,28 @@ async function loadData() {
 
 /* RENDER TABLE */
 function renderTable(arr) {
+  if (!arr.length) {
+    tableBody.innerHTML =
+      `<tr><td colspan="4" class="text-center text-muted">No results found</td></tr>`;
+    return;
+  }
+
   tableBody.innerHTML="";
   arr.forEach(r=>{
     for (const v in r.prices) {
       tableBody.innerHTML+=`
-      <tr>
-        <td>${r.item}</td>
-        <td>${v}</td>
-        <td>₹ ${r.prices[v]}</td>
-        <td>${new Date().toLocaleString()}</td>
-      </tr>`;
+        <tr>
+          <td>${r.item}</td>
+          <td>${v}</td>
+          <td>₹ ${r.prices[v]}</td>
+          <td>${new Date().toLocaleString()}</td>
+        </tr>`;
     }
   });
 }
 
 /* ADD / UPDATE PRICE */
-addItemForm.onsubmit=async e=>{
+addItemForm.onsubmit = async e => {
   e.preventDefault();
   await fetch(API_URL,{
     method:"POST",
@@ -179,7 +187,7 @@ addItemForm.onsubmit=async e=>{
 };
 
 /* ADD VENDOR */
-addVendorBtn.onclick=async()=>{
+addVendorBtn.onclick = async () => {
   await fetch(API_URL,{
     method:"POST",
     body:JSON.stringify({
@@ -188,11 +196,10 @@ addVendorBtn.onclick=async()=>{
     })
   });
   newVendor.value="";
-  loadData();
 };
 
 /* RENAME VENDOR */
-renameVendorBtn.onclick=async()=>{
+renameVendorBtn.onclick = async () => {
   await fetch(API_URL,{
     method:"POST",
     body:JSON.stringify({
@@ -203,16 +210,26 @@ renameVendorBtn.onclick=async()=>{
   });
   oldVendor.value="";
   renameVendor.value="";
-  loadData();
 };
 
-/* SEARCH */
-searchBox.oninput=()=>{
-  const q=searchBox.value.toLowerCase();
-  renderTable(data.filter(d=>
+/* SEARCH (ONLY TRIGGER TABLE) */
+searchBox.oninput = () => {
+  const q = searchBox.value.trim().toLowerCase();
+
+  if (!q) {
+    tableBody.innerHTML =
+      `<tr><td colspan="4" class="text-center text-muted">
+        Type in search to see results
+      </td></tr>`;
+    return;
+  }
+
+  const filtered = data.filter(d =>
     d.item.toLowerCase().includes(q) ||
-    Object.keys(d.prices).some(v=>v.toLowerCase().includes(q))
-  ));
+    Object.keys(d.prices).some(v => v.toLowerCase().includes(q))
+  );
+
+  renderTable(filtered);
 };
 </script>
 
