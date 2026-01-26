@@ -34,7 +34,7 @@
 <!-- 🔓 MAIN APP -->
 <div class="container hidden" id="appContent">
 
-  <h3 class="text-center mt-3 mb-3">Vendor Price List</h3>
+  <h3 class="text-center mt-3 mb-3">MAP Price List</h3>
 
   <!-- ITEM FORM -->
   <form id="addItemForm" class="row g-2">
@@ -50,7 +50,7 @@
     </div>
 
     <div class="col-md-3">
-      <input type="number" id="itemPrice" class="form-control" placeholder="Price ₹" required>
+      <input type="number" id="itemPrice" step="0.01" class="form-control" placeholder="Price ₹" required>
     </div>
 
     <div class="col-md-2">
@@ -107,7 +107,7 @@
 
 <script>
 /* CONFIG */
-const APP_PIN = "1711"; // CHANGE PIN
+ // CHANGE PIN
 const API_URL = "https://script.google.com/macros/s/AKfycbytrvtOXfZOMUxzRLNuWv-hllF4pTo7jolWd0rEtV-UMO_UY6jaGJMR2YR5i8eI6L8XLg/exec"; // CHANGE API URL
 
 
@@ -186,7 +186,7 @@ addItemForm.onsubmit = async e => {
       action:"price",
       item:itemName.value.trim(),
       vendor:vendorName.value,
-      price:itemPrice.value
+      price:parseFloat(itemPrice.value)
     })
   });
   addItemForm.reset();
@@ -239,5 +239,6 @@ renameVendorBtn.onclick = async () => {
 
 </body>
 </html>
+
 
 
