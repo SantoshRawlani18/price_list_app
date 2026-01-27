@@ -11,6 +11,12 @@
   body { background:#f6f7fb; }
   .hidden { display:none; }
 </style>
+  <style>
+.price-row.updated {
+  background-color: #d1e7dd !important;
+  transition: background-color 1.5s ease;
+}
+</style>
 </head>
 
 <body>
@@ -107,7 +113,7 @@
 
 <script>
 /* CONFIG */
-const APP_PIN = "1711"; // CHANGE PIN
+ // CHANGE PIN
 const API_URL = "https://script.google.com/macros/s/AKfycbytrvtOXfZOMUxzRLNuWv-hllF4pTo7jolWd0rEtV-UMO_UY6jaGJMR2YR5i8eI6L8XLg/exec"; // CHANGE API URL
 
 
@@ -124,6 +130,9 @@ function checkPin() {
   } else pinError.innerText = "Wrong PIN";
 }
 
+  itemName.oninput = checkIfUpdate;
+vendorName.onchange = checkIfUpdate;
+  
 if (sessionStorage.getItem("auth")==="yes") {
   pinScreen.classList.add("hidden");
   appContent.classList.remove("hidden");
@@ -142,6 +151,7 @@ async function loadData() {
   extractVendors();
 }
 
+  
 /* EXTRACT VENDORS */
 function extractVendors() {
   vendors = new Set();
@@ -167,10 +177,10 @@ function renderTable(arr) {
   arr.forEach(r=>{
     for (const v in r.prices) {
       tableBody.innerHTML+=`
-        <tr>
+        <tr onclick="fillForm('${r.item}','${v}','${r.prices[v]}')">
           <td>${r.item}</td>
           <td>${v}</td>
-          <td>₹ ${r.prices[v]}</td>
+          <td>₹ ${Number(r.prices[v]).toFixed(2)}</td>
           <td>${new Date().toLocaleString()}</td>
         </tr>`;
     }
@@ -191,6 +201,14 @@ addItemForm.onsubmit = async e => {
   });
   addItemForm.reset();
   loadData();
+  setTimeout(() => {
+  document.querySelectorAll(".price-row").forEach(row => {
+    if (row.dataset.item === itemName.value.trim().toUpperCase()) {
+      row.classList.add("updated");
+      setTimeout(() => row.classList.remove("updated"), 1500);
+    }
+  });
+}, 600);
 };
 
 /* SEARCH */
@@ -235,6 +253,29 @@ renameVendorBtn.onclick = async () => {
   renameVendor.value="";
   loadData();
 };
+  function checkIfUpdate() {
+  const item = itemName.value.trim().toUpperCase();
+  const vendor = vendorName.value.trim().toUpperCase();
+
+  if (!item || !vendor) return;
+
+  const exists = data.some(d =>
+    d.item.toUpperCase() === item &&
+    Object.keys(d.prices).some(v => v.toUpperCase() === vendor)
+  );
+
+  addItemForm.querySelector("button").innerText =
+    exists ? "Update Price" : "Add Price";
+}
+
+  function fillForm(item, vendor, price) {
+  itemName.value = item;
+  vendorName.value = vendor;
+  itemPrice.value = Number(price).toFixed(2);
+
+  addItemForm.querySelector("button").innerText = "Update Price";
+  itemPrice.focus();
+}
 </script>
 
 </body>
